@@ -1,8 +1,8 @@
 let users = [];
 
-exports.getUsers = () => users;
+export const getUsers = () => users;
 
-exports.addUser = (user) => {
+export const addUser = (user) => {
     users.push(user);
     return user;
 };
