@@ -1,12 +1,12 @@
-const userService = require('../services/userService');
-const responseHelper = require('../helpers/responseHelper');
+import { getUsers, addUser } from '../services/userService.js';
+import { sendResponse } from '../helpers/responseHelper.js';
 
-exports.getAllUsers = (req, res) => {
-    const users = userService.getUsers();
-    responseHelper.sendResponse(res, 200, 'Users fetched successfully', users);
+export const getAllUsers = (req, res) => {
+    const users = getUsers();
+    sendResponse(res, 200, 'Users fetched successfully', users);
 };
 
-exports.createUser = (req, res) => {
-    const user = userService.addUser(req.body);
-    responseHelper.sendResponse(res, 201, 'User created successfully', user);
+export const createUser = (req, res) => {
+    const user = addUser(req.body);
+    sendResponse(res, 201, 'User created successfully', user);
 };
