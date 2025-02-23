@@ -60,6 +60,8 @@ export const getAddressBalance = async (address)=> {
       unspentOutputs.forEach(output => {
         balance += output.amount;
       });
+
+      console.log({balance});
   
       return balance
     } catch (error) {
