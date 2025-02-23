@@ -1,5 +1,5 @@
 import express from "express";
-import { createUser, verifyUser, getUserDetails } from "../controllers/userController.js";
+import { createUser, verifyUser, getUserDetails, getReward } from "../controllers/userController.js";
 
 /**
  * @swagger
@@ -25,7 +25,7 @@ const router = express.Router();
  *             properties:
  *               email:
  *                 type: string
- *                 example: "test@example.com"
+ *                 example: "vishalbirajdar7030@gmail.com"
  *     responses:
  *       200:
  *         description: OTP sent successfully
@@ -51,7 +51,7 @@ router.post("/create", createUser);
  *             properties:
  *               email:
  *                 type: string
- *                 example: "test@example.com"
+ *                 example: "vishalbirajdar7030@gmail.com"
  *               otp:
  *                 type: string
  *                 example: "123456"
@@ -77,7 +77,7 @@ router.post("/verify", verifyUser);
  *         required: true
  *         schema:
  *           type: string
- *         example: "example.com"
+ *         example: "vishalbirajdar7030@gmail.com"
  *     responses:
  *       200:
  *         description: User details retrieved successfully
@@ -87,5 +87,30 @@ router.post("/verify", verifyUser);
  *         description: Error fetching user details
  */
 router.get("/:email", getUserDetails);
+
+
+
+/**
+ * @swagger
+ * /users/{address}:
+ *   post:
+ *     summary: Get 500 BTC by address
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: address
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "0x"
+ *     responses:
+ *       200:
+ *         description: User reward retrieved successfully
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Error fetching user details
+ */
+router.post("/:address", getReward);
 
 export default router;
