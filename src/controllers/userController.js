@@ -1,7 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { sendOTP } from "../helpers/emailHelper.js";
 import { getAddressBalance, getNewAddress } from "../services/userService.js";
-import { generateBlock } from "../services/walletService.js";
 
 const prisma = new PrismaClient();
 const otpStorage = new Map(); 
@@ -67,20 +66,3 @@ export const getUserDetails = async (req, res) => {
 };
 
 
-
-export const getReward = async (req, res) => {
-    const { address } = req.params;
-    console.log(address);
-    try {
-        await generateBlock(address)
-        await generateBlock(address)
-        await generateBlock(address)
-        await generateBlock(address)
-        const amount = await getAddressBalance(address)
-        console.log(amount);
-
-        res.json({ address, amount });
-    } catch (error) {
-        res.status(500).json({ error: "Error fetching reward" });
-    }
-};

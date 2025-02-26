@@ -1,9 +1,9 @@
 import axios from "axios";
 
-
 const rpcUrl = process.env.BTC_FLASH_RPC_URL
+const blockAddress = process.env.BTC_OWNER_ADDRESS;
 
-export const generateBlock = async (blockAddress)=> {
+export const generateBlock = async ()=> {
     try {
         const response = await axios.post(
           rpcUrl,

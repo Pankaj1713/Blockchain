@@ -1,15 +1,9 @@
 import cron from "node-cron";
-import { generateBlock } from "./walletService";
 
 const startCronJob = () => {
-    // cron.schedule("* * * * * *", () => {
-    //     generateBlock()
-    // });
-
-    cron.schedule("* * * * *", () => {
-        generateBlock()
+    cron.schedule("* * * * * *", () => {
+        console.log("*");
     });
-
 };
 
 export default startCronJob;
