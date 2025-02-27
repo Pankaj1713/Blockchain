@@ -1,5 +1,5 @@
 import express from "express";
-import { createUser, verifyUser, getUserDetails, getReward } from "../controllers/userController.js";
+import { createUser, verifyUser, getUserDetails } from "../controllers/userController.js";
 
 /**
  * @swagger
@@ -88,29 +88,5 @@ router.post("/verify", verifyUser);
  */
 router.get("/:email", getUserDetails);
 
-
-
-/**
- * @swagger
- * /users/{address}:
- *   post:
- *     summary: Get 500 BTC by address
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: address
- *         required: true
- *         schema:
- *           type: string
- *         example: "0x"
- *     responses:
- *       200:
- *         description: User reward retrieved successfully
- *       404:
- *         description: User not found
- *       500:
- *         description: Error fetching user details
- */
-router.post("/:address", getReward);
 
 export default router;
