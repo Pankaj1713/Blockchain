@@ -12,3 +12,21 @@ model User {
   email   String  @unique
   address String  @unique
 }
+
+
+model Transaction {
+  id          String   @id @default(uuid())
+  trxHash     String   @unique
+  sender      String 
+  date        DateTime @default(now())
+  amount      Float
+  totalAmount Float
+  addresses   TransactionAddress[]
+}
+
+model TransactionAddress {
+  id             String      @id @default(uuid())
+  address        String
+  transaction    Transaction @relation(fields: [transactionId], references: [id])
+  transactionId  String
+}
