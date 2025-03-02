@@ -1,20 +1,24 @@
 import { PrismaClient } from "@prisma/client";
 import { getTransactionByHash, sendManyByAddress } from "../services/transactionService.js";
+import { sendOTP } from "../helpers/emailHelper.js";
 
 const prisma = new PrismaClient();
 const mapStorage = new Map(); // Temporary storage for transactions before verification
 
 export const sendAmount = async (req, res) => {
     try {
-        const { sender, amount, addresses, otp } = req.body;
+        const { sender, amount, addresses } = req.body;
 
         if (!sender) return res.status(400).json({ error: "Sender is required" });
         if (!amount) return res.status(400).json({ error: "Amount is required" });
         if (!addresses || !Array.isArray(addresses)) return res.status(400).json({ error: "Valid addresses array is required" });
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const user = await prisma.user.findUnique({ where: { address : sender } });
+        if (!user) return res.status(404).json({ error: "User not found" });
 
         // Store transaction details in mapStorage for verification
         mapStorage.set(sender, { sender, amount, addresses, otp });
-
+        await sendOTP(user.email, otp, sender);
         return res.status(200).json({
             message: "Transaction created. Please verify with the OTP sent to your email."
         });
@@ -26,30 +30,30 @@ export const sendAmount = async (req, res) => {
 
 export const verifyTransaction = async (req, res) => {
     try {
-        const { sender, otp } = req.body;
-        if (!sender) return res.status(400).json({ error: "Sender is required" });
-        if (!otp) return res.status(400).json({ error: "OTP is required" });
+        const body = req.body;
+        if (!body.sender) return res.status(400).json({ error: "Sender is required" });
+        if (!body.otp) return res.status(400).json({ error: "OTP is required" });
 
         // Retrieve transaction data from storage
-        const storedTransaction = mapStorage.get(sender);
+        const storedTransaction = mapStorage.get(body.sender);
         if (!storedTransaction) return res.status(400).json({ error: "Transaction not found or expired" });
 
-        const { amount, addresses, storedOtp } = storedTransaction;
-
+        const { amount, addresses, otp } = storedTransaction;
+console.log({otp, bodyotp : body.otp});
         // OTP validation
-        if (otp !== storedOtp) return res.status(400).json({ error: "Invalid OTP" });
+        if (body.otp !== otp) return res.status(400).json({ error: "Invalid OTP" });
 
         const recipients = Object.fromEntries(addresses.map(addr => [addr, amount]));
 
         // Execute the transaction
-        const { data, success } = await sendManyByAddress(sender, recipients);
+        const { data, success } = await sendManyByAddress(body.sender, recipients);
 
         if (!success) return res.status(400).json({ error: "Transaction failed", details: data });
 
         // Store transaction in the database after successful verification
         const transaction = await prisma.transaction.create({
             data: {
-                sender,
+                sender: body.sender,
                 amount,
                 totalAmount: amount * addresses.length,
                 trxHash: data,
@@ -61,7 +65,7 @@ export const verifyTransaction = async (req, res) => {
         });
 
         // Remove from temporary storage after successful transaction
-        mapStorage.delete(sender);
+        mapStorage.delete(body.sender);
 
         return res.status(200).json({
             message: "Transaction successful",
