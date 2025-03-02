@@ -13,17 +13,24 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-export const sendOTP = async (email, otp) => {
+export const sendOTP = async (email, otp, sender = null) => {
     if (!process.env.EMAIL_SENDER) {
         throw new Error("EMAIL_SENDER is not set in environment variables");
     }
 
+    // Construct email message
+    const subject = sender ? "Transaction OTP Verification" : "Your OTP Code";
+    const message = sender
+        ? `Your OTP code is: ${otp}. It will expire in 10 minutes. Sender: ${sender}. Please verify if this transaction is initiated by you.`
+        : `Your OTP code is: ${otp}. It will expire in 10 minutes.`;
+
     const mailOptions = {
         from: process.env.EMAIL_SENDER,
         to: email,
-        subject: "Your OTP Code",
-        text: `Your OTP code is: ${otp}. It will expire in 10 minutes.`,
+        subject,
+        text: message,
     };
+   
 
     try {
         await transporter.sendMail(mailOptions);
