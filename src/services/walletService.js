@@ -20,7 +20,7 @@ export const generateBlock = async ()=> {
           }
         );
         if (response.data.result) {
-          console.log(`Blocks generated: ${response.data.result}`);
+          // console.log(`Blocks generated: ${response.data.result}`);
         } else {
           console.error('Block generation failed:', response.data.error);
         }

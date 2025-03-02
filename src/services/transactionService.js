@@ -1,70 +1,71 @@
 import axios from "axios";
 
 const rpcUrl = process.env.BTC_FLASH_RPC_URL;
-const RPC_USER = process.env.RPC_USER;
-const RPC_PASSWORD = process.env.RPC_PASSWORD;
-const senderAddress = process.env.BTC_OWNER_ADDRESS;
+const rpcUser = process.env.RPC_USER;
+const rpcPassword = process.env.RPC_PASSWORD;
+const walletName = process.env.BTC_FLASH_WALLET_NAME;
 
-export const sendBitcoin = async (amount, recipientAddresses) => {
+export async function sendManyByAddress(sender, recipients) {
+    console.log({sender, recipients});
     try {
         const utxoResponse = await axios.post(
-            rpcUrl,
+            `${rpcUrl}/wallet/${walletName}`,
             {
                 jsonrpc: "1.0",
-                id: "listutxos",
+                id: "listunspent",
                 method: "listunspent",
-                params: [1, 9999999, [senderAddress]], 
+                params: [1, 9999999, [sender]],
             },
             {
-                auth: { username: RPC_USER, password: RPC_PASSWORD },
+                auth: { username: rpcUser, password: rpcPassword },
                 headers: { "Content-Type": "application/json" },
             }
         );
 
         const utxos = utxoResponse.data.result;
-        if (!utxos.length) return { error: "No UTXOs available for sender", success: false };
+        if (!utxos.length) {
+            return { data: "No UTXOs available", success: false };
+        }
 
         let selectedUtxos = [];
         let totalInputAmount = 0;
+        const totalOutputAmount = Object.values(recipients).reduce((sum, value) => sum + parseFloat(value), 0);
+
         for (let utxo of utxos) {
             selectedUtxos.push({ txid: utxo.txid, vout: utxo.vout });
             totalInputAmount += utxo.amount;
-            if (totalInputAmount >= parseFloat(amount) * recipientAddresses.length) break;
+            if (totalInputAmount >= totalOutputAmount) break;
         }
 
-        if (totalInputAmount < parseFloat(amount) * recipientAddresses.length) {
-            return { error: "Insufficient balance", success: false };
+        if (totalInputAmount < totalOutputAmount) {
+            return { data: "Insufficient balance", success: false };
         }
 
-        const outputs = {};
-        recipientAddresses.forEach((address) => {
-            outputs[address] = parseFloat(amount);
-        });
-
-        const totalOutputAmount = parseFloat(amount) * recipientAddresses.length;
-        const change = totalInputAmount - totalOutputAmount;
+        const fee = 2;
+        const change = totalInputAmount - totalOutputAmount - fee;
         if (change > 0) {
-            outputs[senderAddress] = change; 
+            recipients[sender] = (recipients[sender] || 0) + change;
         }
+
+        console.log("chnage: ", change);
 
         const rawTxResponse = await axios.post(
-            rpcUrl,
+            `${rpcUrl}/wallet/${walletName}`,
             {
                 jsonrpc: "1.0",
                 id: "createrawtransaction",
                 method: "createrawtransaction",
-                params: [selectedUtxos, outputs],
+                params: [selectedUtxos, recipients],
             },
             {
-                auth: { username: RPC_USER, password: RPC_PASSWORD },
+                auth: { username: rpcUser, password: rpcPassword },
                 headers: { "Content-Type": "application/json" },
             }
         );
-
+console.log({rawTxResponse});
         const rawTx = rawTxResponse.data.result;
-
         const signedTxResponse = await axios.post(
-            rpcUrl,
+            `${rpcUrl}/wallet/${walletName}`,
             {
                 jsonrpc: "1.0",
                 id: "signrawtransactionwithwallet",
@@ -72,15 +73,14 @@ export const sendBitcoin = async (amount, recipientAddresses) => {
                 params: [rawTx],
             },
             {
-                auth: { username: RPC_USER, password: RPC_PASSWORD },
+                auth: { username: rpcUser, password: rpcPassword },
                 headers: { "Content-Type": "application/json" },
             }
         );
 
         const signedTx = signedTxResponse.data.result.hex;
-
         const sendTxResponse = await axios.post(
-            rpcUrl,
+            `${rpcUrl}/wallet/${walletName}`,
             {
                 jsonrpc: "1.0",
                 id: "sendrawtransaction",
@@ -88,15 +88,14 @@ export const sendBitcoin = async (amount, recipientAddresses) => {
                 params: [signedTx],
             },
             {
-                auth: { username: RPC_USER, password: RPC_PASSWORD },
+                auth: { username: rpcUser, password: rpcPassword },
                 headers: { "Content-Type": "application/json" },
             }
         );
-
+console.log({sendTxResponse});
         const txid = sendTxResponse.data.result;
-        return { data:txid, success: true };
-
+        return { data: txid, success: true };
     } catch (error) {
-        return { data: error.message, success: false };
+        return { data: error.response ? error.response.data : error.message, success: false };
     }
-};
+}
