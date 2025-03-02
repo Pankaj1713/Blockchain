@@ -99,3 +99,24 @@ console.log({sendTxResponse});
         return { data: error.response ? error.response.data : error.message, success: false };
     }
 }
+
+
+
+
+
+export const getTransactionByHash = async (trxHash) => {
+        const response = await axios.post(
+            rpcUrl,
+            {
+                jsonrpc: "1.0",
+                id: "gettx",
+                method: "gettransaction",
+                params: [trxHash]
+            },
+            {
+                headers: { "Content-Type": "application/json" },
+                auth: { username: rpcUser, password: rpcPassword } // Basic Auth for RPC
+            }
+        );
+        return response.data.result
+    }
