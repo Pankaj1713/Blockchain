@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { sendAmount, getTransactions, getTransactionDetailById } from "../controllers/transactionController.js";
+import { sendAmount, verifyTransaction, getTransactions, getTransactionDetailByHash } from "../controllers/transactionController.js";
 
 const router = Router();
 
@@ -31,13 +31,44 @@ const router = Router();
  *                 example: ["recipient_address_1", "recipient_address_2"]
  *     responses:
  *       200:
- *         description: Transaction successful
+ *         description: Transaction created, waiting for OTP verification
  *       400:
  *         description: Invalid input data
  *       500:
  *         description: Internal server error
  */
 router.post("/transfer", sendAmount);
+
+/**
+ * @swagger
+ * /transactions/verify:
+ *   post:
+ *     summary: Verify transaction with OTP
+ *     description: Verifies the transaction using an OTP before processing it on the blockchain.
+ *     tags:
+ *       - Transactions
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               sender:
+ *                 type: string
+ *                 example: "sender_wallet_address"
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: Transaction successful
+ *       400:
+ *         description: Invalid OTP or transaction not found
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/verify", verifyTransaction);
 
 /**
  * @swagger
@@ -87,6 +118,6 @@ router.get("/", getTransactions);
  *       500:
  *         description: Internal server error
  */
-router.get("/:trxHash", getTransactionDetailById);
+router.get("/:trxHash", getTransactionDetailByHash);
 
 export default router;
